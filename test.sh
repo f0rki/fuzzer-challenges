@@ -17,11 +17,11 @@ RUNTIME=60
 # cmdline processing
 test "$1" = "-h" && {
   echo "Syntax: $0 [FUZZER [TESTCASE]]"
-  echo Fuzzers: afl++, afl++-qemu, afl++-frida, honggfuzz, libfuzzer
+  echo Fuzzers: afl++, afl++-qemu, afl++-frida, afl++-lto, honggfuzz, libfuzzer
   echo Testcase: instead of processing all, process just this one
   exit 0
 }
-test -z "$1" && { echo Warning: no target given - assuming afl++ - available: afl++, afl++-qemu, afl++-frida, honggfuzz, libfuzzer; echo; }
+test -z "$1" && { echo Warning: no target given - assuming afl++ - available: afl++, afl++-lto, afl++-qemu, afl++-frida, honggfuzz, libfuzzer; echo; }
 test -n "$1" && FUZZER=$1
 DONE=
 
@@ -33,6 +33,24 @@ test "$FUZZER" = "afl++" && {
   export AFL_LLVM_DICT2FILE=`pwd`/afl++.dic
   export CMPLOG_LVL=3AT
   export FUZZER_OPTIONS="-Z"
+  DONE=1
+}
+test "$FUZZER" = "afl++-lto" -o "$FUZZER" = "afl++-lto-O1" -o "$FUZZER" = "afl++-lto-O0" && { 
+  export CC=afl-clang-lto
+  export CXX=afl-clang-lto++
+  OPT="-O3"
+  if test "$FUZZER" = "afl++-lto-O1"; then
+      OPT="-O1"
+  elif test "$FUZZER" = "afl++-lto-O0"; then
+      OPT="-O0"
+  fi
+  export CFLAGS="-flto=full $OPT -march=native -fvisibility-inlines-hidden"
+  export CXXLFAGS="$CFLAGS"
+  export AFL_LLVM_CMPLOG=1
+  export AFL_LLVM_DICT2FILE=`pwd`/afl++.dic
+  export CMPLOG_LVL=3
+  export FUZZER_OPTIONS="-Z"
+  FUZZER="afl++-lto"
   DONE=1
 }
 test "$FUZZER" = "afl++-qemu" -o "$FUZZER" = "afl++-frida" && { 
@@ -56,7 +74,7 @@ test "$FUZZER" = "honggfuzz" && {
   DONE=1
 }
 
-test -z "$DONE" && { echo Error: invalid fuzzer, allowed are only afl++, afl++-qemu, afl++-frida, libfuzzer or honggfuzz; exit 1; }
+test -z "$DONE" && { echo Error: invalid fuzzer, allowed are only afl++, afl++-qemu, afl++-frida, afl++-lto, libfuzzer or honggfuzz; exit 1; }
 echo Fuzzer: $FUZZER
 echo Maximum runtime: $RUNTIME
 echo
@@ -76,7 +94,7 @@ rm -rf in out-* *.log crash* SIG* HONGGFUZZ.REPORT.TXT
 ulimit -c 0
 mkdir in || exit 1
 echo ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ > in/in
-test "$FUZZER" = "afl++" -o "$FUZZER" = "afl++-qemu" -o "$FUZZER" = "afl++-frida" && {
+test "$FUZZER" = "afl++" -o "$FUZZER" = "afl++-qemu" -o "$FUZZER" = "afl++-frida" -o "$FUZZER" = "afl++-lto" && {
   OK=
   afl-fuzz -h 2>&1 | grep -q ' -l ' && OK=1
   test -z "$OK" && echo Warning: afl++ is not cmplog_variant
@@ -109,7 +127,7 @@ for i in *.c*; do
       echo Running $TARGET ...
 
       test -e ${AFL_TMPDIR}/.cur_input && rm ${AFL_TMPDIR}/.cur_input
-      test "$FUZZER" = afl++ && {
+      test "$FUZZER" = "afl++" -o "$FUZZER" = "afl++-lto" && {
         TIME=`{ time afl-fuzz -x afl++.dic $FUZZER_OPTIONS -V$RUNTIME -i in -o out-$TARGET -c ./$TARGET -- ./$TARGET >/dev/null 2>$TARGET.log ; } 2>&1 |grep -w real|awk '{print$2}'`
         ls out-$TARGET/default/crashes/id* >/dev/null 2>&1 && {
           echo SUCCESS: $TARGET $TIME
