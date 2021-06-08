@@ -22,21 +22,21 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   uint32_t *p32;
   bool r = true;
 
-  if (len < 20) bail("too short", 0);
+  if (len < 24) bail("too short", 0);
 
   p32 = (uint32_t *)(buf);
   r &= (*p32 == 0x11223344);
 
-  p32 = (uint32_t *)(buf + 4);
+  p32 = (uint32_t *)(buf + 5);
   r &= (*p32 == 0x55667788);
 
-  p32 = (uint32_t *)(buf + 8);
+  p32 = (uint32_t *)(buf + 10);
   r &= (*p32 == 0xa0a1a2a3);
 
-  p32 = (uint32_t *)(buf + 12);
+  p32 = (uint32_t *)(buf + 16);
   r &= (*p32 == 0xa4a5a6a7);
 
-  p32 = (uint32_t *)(buf + 16);
+  p32 = (uint32_t *)(buf + 20);
   r &= (*p32 == 0x1234aabb);
 
   if (r) {
