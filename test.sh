@@ -35,20 +35,26 @@ test "$FUZZER" = "afl++" && {
   export FUZZER_OPTIONS="-Z"
   DONE=1
 }
-test "$FUZZER" = "afl++-lto" -o "$FUZZER" = "afl++-lto-O1" -o "$FUZZER" = "afl++-lto-O0" && { 
+test "$FUZZER" == "afl++-lto" || test "$FUZZER" == "afl++-lto"* && { 
   export CC=afl-clang-lto
   export CXX=afl-clang-lto++
-  OPT="-O3"
-  if test "$FUZZER" = "afl++-lto-O1"; then
+  OPT="-O3"  # default
+  if test "$FUZZER" = "afl++-lto-O3"; then
+      OPT="-O3"
+  elif test "$FUZZER" = "afl++-lto-O2"; then
+      OPT="-O2"
+  elif test "$FUZZER" = "afl++-lto-O1"; then
       OPT="-O1"
   elif test "$FUZZER" = "afl++-lto-O0"; then
       OPT="-O0"
   fi
-  export CFLAGS="-flto=full $OPT -march=native -fvisibility-inlines-hidden"
+  export AFL_LLVM_INSTRUMENT=CLASSIC
+  export AFL_LLVM_EXPLICIT_CMP_FEEDBACK=1
+  export CFLAGS="-flto=full $OPT -march=native -fvisibility-inlines-hidden -Wl,--plugin-opt=-lto-embed-bitcode=optimized"
   export CXXLFAGS="$CFLAGS"
   export AFL_LLVM_CMPLOG=1
   export AFL_LLVM_DICT2FILE=`pwd`/afl++.dic
-  export CMPLOG_LVL=3
+  export CMPLOG_LVL=3AT
   export FUZZER_OPTIONS="-Z"
   FUZZER="afl++-lto"
   DONE=1

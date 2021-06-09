@@ -30,39 +30,45 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   uint32_t *p32;
   uint64_t hash = ijon_simple_hash((uint64_t)&LLVMFuzzerTestOneInput);
-  bool r = true;
+  bool chain = true;
+  bool r = false;
   size_t off = 0;
 
   if (len < 20) bail("too short", 0);
 
   p32 = (uint32_t *)(buf);
-  r &= (*p32 == (uint32_t)hash);
-  hash = ijon_simple_hash(hash + 1);
-  off |= r << 1;
+  r = (*p32 == (uint32_t)hash);
+  hash = ijon_simple_hash(hash);
+  off |= r;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 4);
-  r &= (*p32 == (uint32_t)hash);
-  hash = ijon_simple_hash(hash + 1);
-  off |= r << 2;
+  r = (*p32 == (uint32_t)hash);
+  hash = ijon_simple_hash(hash);
+  off |= r << 1;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 8);
-  r &= (*p32 == (uint32_t)hash);
-  hash = ijon_simple_hash(hash + 1);
-  off |= r << 3;
+  r = (*p32 == (uint32_t)hash);
+  hash = ijon_simple_hash(hash);
+  off |= r << 2;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 12);
-  r &= (*p32 == (uint32_t)hash);
-  hash = ijon_simple_hash(hash + 1); // is this a blockchain?
-  off |= r << 4;
+  r = (*p32 == (uint32_t)hash);
+  hash = ijon_simple_hash(hash); // is this a blockchain?
+  off |= r << 3;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 16);
-  r &= (*p32 == (uint32_t)hash);
-  off |= r << 5;
+  r = (*p32 == (uint32_t)hash);
+  off |= r << 4;
+  chain &= r;
 
-  if (r) {
+  if (chain) {
     abort();
   }
- 
+
   fprintf(stderr, "wrong u32 (%zx vs %zx)\n", off, (size_t)31);
   return 0;
 }

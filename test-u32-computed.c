@@ -34,19 +34,19 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   p32 = (uint32_t *)(buf);
   if (*p32 != (uint32_t)hash) bail("wrong u32", 0);
-  hash = ijon_simple_hash(hash + 1);
+  hash = ijon_simple_hash(hash);
 
   p32 = (uint32_t *)(buf + 4);
   if (*p32 != (uint32_t)hash) bail("wrong u32", 4);
-  hash = ijon_simple_hash(hash + 1);
+  hash = ijon_simple_hash(hash);
 
   p32 = (uint32_t *)(buf + 8);
   if (*p32 != (uint32_t)hash) bail("wrong u32", 8);
-  hash = ijon_simple_hash(hash + 1);
+  hash = ijon_simple_hash(hash);
 
   p32 = (uint32_t *)(buf + 12);
   if (*p32 != (uint32_t)hash) bail("wrong u32", 12);
-  hash = ijon_simple_hash(hash + 1); // is this a blockchain?
+  hash = ijon_simple_hash(hash); // is this a blockchain?
 
   p32 = (uint32_t *)(buf + 16);
   if (*p32 != (uint32_t)hash) bail("wrong u32", 16);

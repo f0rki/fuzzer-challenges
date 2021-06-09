@@ -20,33 +20,43 @@
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   uint32_t *p32;
-  bool r = true;
+  bool chain = true;
+  bool r = false;
+  size_t off = 0;
 
   if (len < 20) bail("too short", 0);
 
   p32 = (uint32_t *)(buf);
-  r &= (*p32 == 0x11223344);
+  r = (*p32 == 0x11223344);
+  off |= r;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 4);
-  r &= (*p32 == 0x55667788);
+  r = (*p32 == 0x55667788);
+  off |= r << 1;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 8);
-  r &= (*p32 == 0xa0a1a2a3);
+  r = (*p32 == 0xa0a1a2a3);
+  off |= r << 2;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 12);
-  r &= (*p32 == 0xa4a5a6a7);
+  r = (*p32 == 0xa4a5a6a7);
+  off |= r << 3;
+  chain &= r;
 
   p32 = (uint32_t *)(buf + 16);
-  r &= (*p32 == 0x1234aabb);
+  r = (*p32 == 0x1234aabb);
+  off |= r << 4;
+  chain &= r;
 
-  if (r) {
+  if (chain) {
     abort();
-  } else {
-    bail("one int was wrong", 0);
   }
 
+  fprintf(stderr, "wrong u32 (%zx vs %zx)\n", off, (size_t)31);
   return 0;
-
 }
 
 #ifdef __AFL_COMPILER
