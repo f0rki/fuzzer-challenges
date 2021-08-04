@@ -6,7 +6,7 @@
 FUZZER=afl++
 
 # how many seconds to try each testcase, recommended: 10-30
-RUNTIME=60
+RUNTIME=360
 
 # test a fuzzer in a specific directory? you can put that here
 #FUZZER_DIR=~/AFLplusplus/branches/cmplog_variant
@@ -35,7 +35,7 @@ test "$FUZZER" = "afl++" && {
   export FUZZER_OPTIONS="-Z"
   DONE=1
 }
-test "$FUZZER" == "afl++-lto" || test "$FUZZER" == "afl++-lto"* && { 
+test "$FUZZER" == "afl++-lto" || test "$FUZZER" == "afl++-lto"* && {
   export CC=afl-clang-lto
   export CXX=afl-clang-lto++
   OPT="-O3"  # default
@@ -48,8 +48,8 @@ test "$FUZZER" == "afl++-lto" || test "$FUZZER" == "afl++-lto"* && {
   elif test "$FUZZER" = "afl++-lto-O0"; then
       OPT="-O0"
   fi
-  export AFL_LLVM_INSTRUMENT=CLASSIC
-  export AFL_LLVM_EXPLICIT_CMP_FEEDBACK=1
+  #export AFL_LLVM_INSTRUMENT=CLASSIC
+  #export AFL_LLVM_EXPLICIT_CMP_FEEDBACK=1
   export CFLAGS="-flto=full $OPT -march=native -fvisibility-inlines-hidden -Wl,--plugin-opt=-lto-embed-bitcode=optimized"
   export CXXLFAGS="$CFLAGS"
   export AFL_LLVM_CMPLOG=1
@@ -72,6 +72,14 @@ test "$FUZZER" = "libfuzzer" && {
   export CXX=clang++
   export CFLAGS="-fsanitize=fuzzer -fsanitize=address"
   export FUZZER_OPTIONS="-use_value_profile=1 -entropic=1 $FUZZER_OPTIONS"
+  DONE=1
+}
+test "$FUZZER" = "libfuzzer-lto" && { 
+  export CC=clang
+  export CXX=clang++
+  export CFLAGS="-fsanitize=fuzzer -fuse-ld=lld -flto=full $OPT -march=native -fvisibility-inlines-hidden -Wl,--plugin-opt=-lto-embed-bitcode=optimized"
+  export FUZZER_OPTIONS="-use_value_profile=1 -entropic=1 $FUZZER_OPTIONS"
+  FUZZER="libfuzzer"
   DONE=1
 }
 test "$FUZZER" = "honggfuzz" && {
@@ -128,6 +136,10 @@ for i in *.c*; do
 
   TARGET=${i%%.c*}
   test -z "$2" -o "$2" = "$TARGET" && {
+    test -e "$TARGET.seed" && {
+        rm ./in/*
+        cp "$TARGET.seed" "./in/$TARGET.seed"
+    }
 
     test -x "$TARGET" && {
       echo Running $TARGET ...
@@ -208,6 +220,12 @@ for i in *.c*; do
         }
       }
 
+    }
+
+
+    test -e "$TARGET.seed" && {
+        rm "./in/$TARGET.seed"
+        echo ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ > in/in
     }
 
   }
