@@ -11,7 +11,7 @@
 #define bail(msg, pos)                                                         \
   while (1) {                                                                  \
                                                                                \
-    fprintf(stderr, "%s at %u\n", (char *)msg, (uint32_t)pos);                 \
+    fprintf(stderr, "%s at %lu\n", (char *)msg, (unsigned long)pos);           \
     return 0;                                                                  \
   }
 
@@ -35,10 +35,13 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
     bail("too short", 0);
 
   for (size_t i = 0; i < N; i++) {
-    if (p32[i] != (uint32_t)hash) {
+    uint32_t C = i | (((uint32_t)hash) & 0xffffff00);
+    if (p32[i] == C) {
+      hash = ijon_simple_hash(hash);
+      // continue
+    } else {
       bail("wrong u32", i * sizeof(uint32_t))
-    };
-    hash = ijon_simple_hash(hash);
+    }
   }
 
   abort();
