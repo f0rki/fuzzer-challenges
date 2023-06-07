@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,33 +13,39 @@
 
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
-  uint32_t *p32;
+  uint32_t *p32 = (uint32_t *)(buf);
+  bool chain = true;
+  bool r = false;
+  size_t off = 0;
 
-  if (len < 24)
+  if (len < 20)
     bail("too short", 0);
 
-  p32 = (uint32_t *)(buf);
-  if (*p32 != 0x11223344)
-    bail("wrong u32", 0);
+  r = (p32[0] == 0x11223344);
+  off |= r;
+  chain &= r;
 
-  p32 = (uint32_t *)(buf + 4);
-  if (*p32 != 0x55667788)
-    bail("wrong u32", 4);
+  r = (p32[1] == 0x55667788);
+  off |= r << 1;
+  chain &= r;
 
-  p32 = (uint32_t *)(buf + 8);
-  if (*p32 != 0xa0a1a2a3)
-    bail("wrong u32", 8);
+  r = (p32[2] == 0xa0a1a2a3);
+  off |= r << 2;
+  chain &= r;
 
-  p32 = (uint32_t *)(buf + 12);
-  if (*p32 != 0xa4a5a6a7)
-    bail("wrong u32", 12);
+  r = (p32[3] == 0xa4a5a6a7);
+  off |= r << 3;
+  chain &= r;
 
-  p32 = (uint32_t *)(buf + 16);
-  if (*p32 != 0x1234aabb)
-    bail("wrong u32", 16);
+  r = (p32[4] == 0x1234aabb);
+  off |= r << 4;
+  chain &= r;
 
-  abort();
+  if (chain) {
+    abort();
+  }
 
+  bail("wrong u32 off", off);
   return 0;
 }
 
@@ -57,5 +64,4 @@ int main(int argc, char **argv) {
   LLVMFuzzerTestOneInput(buf, len);
   exit(0);
 }
-
 #endif

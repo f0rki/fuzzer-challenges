@@ -9,33 +9,26 @@
 #include <unistd.h>
 
 #include "bail.h"
+#include "hash.h"
 
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
-  uint32_t *p32;
+  uint32_t *p32 = (uint32_t *)(buf);
+  uint64_t hash = ijon_simple_hash(obtain_runtime_seed());
+  const size_t N = 256;
 
-  if (len < 24)
+  if (len < (N * 4))
     bail("too short", 0);
 
-  p32 = (uint32_t *)(buf);
-  if (*p32 != 0x11223344)
-    bail("wrong u32", 0);
-
-  p32 = (uint32_t *)(buf + 4);
-  if (*p32 != 0x55667788)
-    bail("wrong u32", 4);
-
-  p32 = (uint32_t *)(buf + 8);
-  if (*p32 != 0xa0a1a2a3)
-    bail("wrong u32", 8);
-
-  p32 = (uint32_t *)(buf + 12);
-  if (*p32 != 0xa4a5a6a7)
-    bail("wrong u32", 12);
-
-  p32 = (uint32_t *)(buf + 16);
-  if (*p32 != 0x1234aabb)
-    bail("wrong u32", 16);
+  for (size_t i = 0; i < N; i++) {
+    uint32_t C = i | (((uint32_t)hash) & 0xffffff00);
+    if (p32[i] == C) {
+      hash = ijon_simple_hash(hash);
+      // continue
+    } else {
+      bail("wrong u32", i * sizeof(uint32_t))
+    }
+  }
 
   abort();
 
@@ -45,7 +38,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 #ifdef __AFL_COMPILER
 int main(int argc, char **argv) {
 
-  unsigned char buf[32];
+  unsigned char buf[4096];
   ssize_t len;
   int fd = 0;
   if (argc > 1)
