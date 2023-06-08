@@ -18,8 +18,9 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   bool r = false;
   size_t off = 0;
 
-  if (len < 20)
+  if (len < (5 * sizeof(uint32_t))) {
     bail("too short", 0);
+  }
 
   r = (p32[0] == 0x11223344);
   off |= r;
@@ -49,7 +50,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   return 0;
 }
 
-#ifdef __AFL_COMPILER
+#ifdef __NEED_MAIN
 int main(int argc, char **argv) {
 
   unsigned char buf[32];

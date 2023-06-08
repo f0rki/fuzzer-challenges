@@ -14,7 +14,7 @@
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   uint32_t *p32 = (uint32_t *)(buf);
-  uint64_t hash = ijon_simple_hash(obtain_runtime_seed());
+  uint64_t hash = simple_hash(obtain_runtime_seed());
   const size_t N = 256;
 
   if (len < (N * 4))
@@ -23,7 +23,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   for (size_t i = 0; i < N; i++) {
     uint32_t C = i | (((uint32_t)hash) & 0xffffff00);
     if (p32[i] == C) {
-      hash = ijon_simple_hash(hash);
+      hash = simple_hash(hash);
       // continue
     } else {
       bail("wrong u32", i * sizeof(uint32_t))
@@ -35,7 +35,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   return 0;
 }
 
-#ifdef __AFL_COMPILER
+#ifdef __NEED_MAIN
 int main(int argc, char **argv) {
 
   unsigned char buf[4096];

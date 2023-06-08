@@ -55,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
 int AllLines[__LINE__ + 1];  // Must be the last line.
 
-#ifdef __AFL_COMPILER
+#ifdef __NEED_MAIN
 int main(int argc, char **argv) {
 
   unsigned char buf[64];

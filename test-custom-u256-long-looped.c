@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "bail.h"
+#include "hash.h"
 
 typedef struct {
   uint64_t a;
@@ -26,7 +27,7 @@ __attribute__((optnone)) bool u256_eq(uint256_t *x, uint256_t *y) {
 }
 
 void u256_fprint(uint256_t *u, FILE *fp) {
-  fprintf(fp, "0x%llx_%llx_%llx_%llx", u->a, u->b, u->c, u->d);
+  fprintf(fp, "0x%lx_%lx_%lx_%lx", u->a, u->b, u->c, u->d);
 }
 
 void u256_hash_advance(uint256_t *h) {
@@ -58,7 +59,7 @@ const size_t LOOP_MAX = 255;
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   // random constant
-  uint256_t h = {0xd19b16fe2eaa4b24, 0xa9c631e117332060, 0x620a6e3c1058e850,
+  uint256_t h = {obtain_runtime_seed(), 0xa9c631e117332060, 0x620a6e3c1058e850,
                  0x159edea320a9e804};
   // we use this to compute a new constant at every comparison, s.t.
   // dictionaries do not help the fuzzer, and instead one must rely on cmplog
@@ -105,6 +106,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   // now if the loop above makes the hitcount of each branch in the uint256_eq
   // function reach the maximum, then there is no "signal" to the fuzzer anymore.
   // ergo, only hitcounters that support values > LOOP_MAX can overcome the next
+  // comparison.
 
   req_len = pos + N;
   if (len < req_len) {
@@ -134,7 +136,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   return 0;
 }
 
-#ifdef __AFL_COMPILER
+#ifdef __NEED_MAIN
 int main(int argc, char **argv) {
 
   const unsigned buf_size = N * (LOOP_MAX + 2);

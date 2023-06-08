@@ -7,21 +7,24 @@ make clean
 make CC=clang CFLAGS="-g -D__AFL_COMPILER=1" compile
 ulimit -c unlimited
 
-# removed longdouble - takes forever
-for j in test-crc32 test-transform test-u32 test-u8 test-double test-memcmp test-u128 test-u32-cmp test-float test-strcmp test-u16 test-u64; do
-{
+for i in *.c*; do
+  TARGET=${i%%.c*}
+
+  # removed longdouble - takes forever
+  if [[ "$TARGET" = "test-longdouble" ]]; then
+      continue
+  fi
 
   # Setup individual run
   rm -rf core out
   mkdir out
-  echo Running $j ...
-  timeout -s KILL 15 python3 tritondsetest.py ./$j > $j.log 2>&1
+  echo Running $TARGET ...
+  timeout -s KILL 120 python3 tritondsetest.py ./$TARGET > $TARGET.log 2>&1
   cd out
-  for i in *; do cat $i | ../$j ; done
-  test -e core && echo SUCCESS | tee -a ../$j.log
+  for i in *; do cat $i | ../$TARGET ; done
+  test -e core && echo SUCCESS | tee -a ../$TARGET.log
   cd ..
   rm -rf out
-}
 done
 
 echo

@@ -15,32 +15,32 @@
 int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
 
   uint32_t *p32 = (uint32_t *)(buf);
-  uint64_t hash = ijon_simple_hash(obtain_runtime_seed());
+  uint64_t hash = simple_hash(obtain_runtime_seed());
   bool chain = true;
   bool r = false;
   size_t off = 0;
 
-  if (len < 20) {
+  if (len < (5 * sizeof(uint32_t))) {
     bail("too short", 0);
   }
 
   r = (p32[0] == (uint32_t)hash);
-  hash = ijon_simple_hash(hash);
+  hash = simple_hash(hash);
   off |= r;
   chain &= r;
 
   r = (p32[1] == (uint32_t)hash);
-  hash = ijon_simple_hash(hash);
+  hash = simple_hash(hash);
   off |= r << 1;
   chain &= r;
 
   r = (p32[2] == (uint32_t)hash);
-  hash = ijon_simple_hash(hash);
+  hash = simple_hash(hash);
   off |= r << 2;
   chain &= r;
 
   r = (p32[3] == (uint32_t)hash);
-  hash = ijon_simple_hash(hash); // is this a blockchain?
+  hash = simple_hash(hash); // is this a blockchain?
   off |= r << 3;
   chain &= r;
 
@@ -56,7 +56,7 @@ int LLVMFuzzerTestOneInput(uint8_t *buf, size_t len) {
   return 0;
 }
 
-#ifdef __AFL_COMPILER
+#ifdef __NEED_MAIN
 int main(int argc, char **argv) {
 
   unsigned char buf[32];
